@@ -6,113 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "SketchingComponent.generated.h"
 
-/** Feature point stands for two kind of special points in a stroke:
-  * 1. Turning point, the point where the direction of the stroke changes.
-  * 2. End point, including start and end point of the stroke
-  */
-USTRUCT(BlueprintType)
-struct FFeaturePoint
-{
-	GENERATED_BODY()
-
-	FFeaturePoint() 
-	{
-		Position = FVector2D(0, 0);
-		Direction = -1;
-		Priority = 0;
-	}
-
-	FFeaturePoint(FVector2D Vector, int32 PriorityLevel)
-	{
-		Position = Vector;
-		Direction = -1;
-		Priority = PriorityLevel;
-	}
-
-	// Local position of the point (relative to drawing frame) 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Feature Point")
-	FVector2D Position;
-
-	// Angle of the line connecting this point and last feature point
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Feature Point")
-	float Direction;
-
-	// Order of the point when it is generated, start&end points have Priority 0, first generated turnpoint has priority 1, etc..
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Feature Point")
-	int32 Priority;
-
-};
-
-USTRUCT(BlueprintType)
-struct FStroke
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stroke")
-	TArray<FVector2D> WayPoints;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stroke")
-	TArray<FFeaturePoint> FeaturePoints;
-
-	void CalculateDirection(int32 PointIndex) {
-
-	}
-
-};
-
-USTRUCT(BlueprintType)
-struct FSymbol
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TArray<FStroke> Strokes;
-
-	void AddStroke(FStroke NewStroke) {
-		Strokes.Add(NewStroke);
-	}
-
-	bool AddWayPoint(FVector2D WayPoint) {
-		if (Strokes.Num() == 0)
-		{
-			return false;
-		}
-		Strokes.Last().WayPoints.Add(WayPoint);
-		return true;
-	}
-
-	bool AddFeaturePoint(FVector2D Point, int32 Priority) {
-		if (Strokes.Num() == 0)
-		{
-			return false;
-		}
-		Strokes.Last().FeaturePoints.Add(FFeaturePoint(Point, Priority));
-		return true;
-	}
-
-	/** Get the waypoint on the newest stroke
-    * @param Index index of the waypoint in the array
-	* @return reference of the waypoint
-	*/
-	FVector2D& GetWaypoint(int32 Index) {
-
-		return Strokes.Last().WayPoints[Index];
-	}
-
-	FVector2D& GetFeaturePointPosition(int32 Index) {
-		return Strokes.Last().FeaturePoints[Index].Position;
-	}
-
-	bool SetFeaturePointDirection(int32 Index, float Direction) {
-		if (Index < 0 || Index >= Strokes.Last().FeaturePoints.Num())
-		{
-			return false;
-		}
-
-		Strokes.Last().FeaturePoints[Index].Direction = Direction;
-		return true;
-	}
-};
+class USymbolCharacter;
 
 /** This component is responsible for recieving mouse positions while drawing and use the position 
   * data to construct way points along the stroke. It also recognize turning points that will be useful
@@ -157,7 +51,15 @@ public:
 
 	// Finish sampling stroke, takes mouse position as the end way point
 	UFUNCTION(BlueprintCallable, Category = "Drawing")
-	FStroke FinishSample(FVector2D MousePos);
+	void FinishSample(FVector2D MousePos);
+
+	// Debug only, get waypoints in the last stroke
+	UFUNCTION(BlueprintCallable, Category = "Debug")
+	TArray<FVector2D> GetLastWaypoints();
+
+	// Debug only, get featurepoints in the last stroke
+	UFUNCTION(BlueprintCallable, Category = "Debug")
+	TArray<FVector2D> GetLastFeaturePoints();
 
 	/** This function should be called immediately after the whiteboard is spawned 
 	  * (in other words, before player start to draw) 
@@ -176,7 +78,7 @@ private:
 	const int32 MaxSamplesAcrossScreen = 60;
 
 	UPROPERTY()
-	FSymbol Symbol;
+	USymbolCharacter* NewSymbol;
 
 	FVector2D LastSamplePoint;
 

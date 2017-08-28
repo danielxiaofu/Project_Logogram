@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SketchingComponent.h"
+#include "Logogram/SymbolCharacter.h"
 
 // Sets default values for this component's properties
 USketchingComponent::USketchingComponent()
@@ -17,7 +18,6 @@ USketchingComponent::USketchingComponent()
 void USketchingComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
 	// ...
 	
 }
@@ -46,13 +46,12 @@ void USketchingComponent::StartSample(FVector2D MousePos)
 	if (!MouseOutOfRange())
 	{
 		// Add waypoint
-		FStroke NewStroke;
-		Symbol.AddStroke(NewStroke);
-		Symbol.AddWayPoint(MousePos);
+		NewSymbol->AddStroke();
+		NewSymbol->AddWaypoint(MousePos);
 		LastSamplePoint = MousePos;
 
 		// Add feature point
-		Symbol.AddFeaturePoint(MousePos, 0);
+		NewSymbol->AddFeaturePoint(MousePos, 0);
 
 		WaypointDelegate.Broadcast(MousePos);
 	}
@@ -60,11 +59,11 @@ void USketchingComponent::StartSample(FVector2D MousePos)
 	bIsSampling = true;
 }
 
-FStroke USketchingComponent::FinishSample(FVector2D MousePos)
+void USketchingComponent::FinishSample(FVector2D MousePos)
 {
 	if (!MouseOutOfRange())
 	{
-		Symbol.AddWayPoint(MousePos);
+		NewSymbol->AddWaypoint(MousePos);
 		
 		WaypointDelegate.Broadcast(MousePos);
 		// Debug, print all waypoints
@@ -79,16 +78,26 @@ FStroke USketchingComponent::FinishSample(FVector2D MousePos)
 	}
 
 	bIsSampling = false;
-	GenerateTurningPoint(0, Symbol.Strokes.Last().WayPoints.Num() - 1, 1);
+	GenerateTurningPoint(0, NewSymbol->GetLastStroke().WayPoints.Num() - 1, 1);
 	if (!MouseOutOfRange())
 	{
-		Symbol.AddFeaturePoint(MousePos, 0);
+		NewSymbol->AddFeaturePoint(MousePos, 0);
 	}
 	
 	CalculateFeaturePointDirection();
 
-	return Symbol.Strokes.Last();
 }
+
+TArray<FVector2D> USketchingComponent::GetLastWaypoints()
+{
+	return NewSymbol->GetLastWaypointArray();
+}
+
+TArray<FVector2D> USketchingComponent::GetLastFeaturePoints()
+{
+	return NewSymbol->GetLastFeaturePointArray();
+}
+
 
 void USketchingComponent::SampleMouse()
 {
@@ -101,7 +110,7 @@ void USketchingComponent::SampleMouse()
 
 	if (DistanceSquared > WayPointSampleDistance * WayPointSampleDistance)
 	{
-		Symbol.AddWayPoint(DecalPosition);
+		NewSymbol->AddWaypoint(DecalPosition);
 
 		/** If the distance is greater than twice of the sample distance, there may be a gap between two points,
 		* therefore additional points should be added to the gap
@@ -114,7 +123,7 @@ void USketchingComponent::SampleMouse()
 			for (int32 i = 0; i < NumOfPoints; i++)
 			{
 				FVector2D NewPoint = LastSamplePoint + (Direction * WayPointSampleDistance);
-				Symbol.AddWayPoint(NewPoint);
+				NewSymbol->AddWaypoint(NewPoint);
 				LastSamplePoint = NewPoint;
 
 				WaypointDelegate.Broadcast(NewPoint);
@@ -131,6 +140,8 @@ void USketchingComponent::SampleMouse()
 
 void USketchingComponent::OnWhiteboardSpawned(float Size)
 {
+	NewSymbol = NewObject<USymbolCharacter>();
+
 	CanvasSize = Size;
 
 	WayPointSampleDistance = CanvasSize / MaxSamplesAcrossScreen;
@@ -145,14 +156,14 @@ bool USketchingComponent::GenerateTurningPoint(int32 PointIndex1, int32 PointInd
 		return false;
 	}
 
-	const float A = Symbol.GetWaypoint(PointIndex2).X - Symbol.GetWaypoint(PointIndex1).X;
-	const float B = Symbol.GetWaypoint(PointIndex2).Y - Symbol.GetWaypoint(PointIndex1).Y;
-	const float C = Symbol.GetWaypoint(PointIndex1).X * Symbol.GetWaypoint(PointIndex2).Y - Symbol.GetWaypoint(PointIndex2).X * Symbol.GetWaypoint(PointIndex1).Y;
+	const float A = NewSymbol->GetWaypoint(PointIndex2).X - NewSymbol->GetWaypoint(PointIndex1).X;
+	const float B = NewSymbol->GetWaypoint(PointIndex2).Y - NewSymbol->GetWaypoint(PointIndex1).Y;
+	const float C = NewSymbol->GetWaypoint(PointIndex1).X * NewSymbol->GetWaypoint(PointIndex2).Y - NewSymbol->GetWaypoint(PointIndex2).X * NewSymbol->GetWaypoint(PointIndex1).Y;
 	float Max = 3000;
 	int32 MaxDistPointIndex = -1;
 	for (int32 i = PointIndex1 + 1; i < PointIndex2; i++) 
 	{
-		FVector2D Point = Symbol.GetWaypoint(i);
+		FVector2D Point = NewSymbol->GetWaypoint(i);
 		//const float Distance = FMath::Abs((A * Point.Y) - (B * Point.X) + C) / (FMath::Square(B) + FMath::Square(A));
 		const float Distance = FMath::Abs((A * Point.Y) - (B * Point.X) + C);
 		//UE_LOG(LogTemp, Warning, TEXT("Distance = %f"), Distance)
@@ -166,7 +177,7 @@ bool USketchingComponent::GenerateTurningPoint(int32 PointIndex1, int32 PointInd
 	// Recursively look for other way points
 	if (MaxDistPointIndex != -1) {
 		GenerateTurningPoint(PointIndex1, MaxDistPointIndex, Priority + 1);
-		Symbol.AddFeaturePoint(Symbol.GetWaypoint(MaxDistPointIndex), Priority);
+		NewSymbol->AddFeaturePoint(NewSymbol->GetWaypoint(MaxDistPointIndex), Priority);
 		//UE_LOG(LogTemp, Warning, TEXT("Turn point created, max distance = %f"), Max)
 		GenerateTurningPoint(MaxDistPointIndex, PointIndex2, Priority + 1);
 		return true;
@@ -178,32 +189,32 @@ bool USketchingComponent::GenerateTurningPoint(int32 PointIndex1, int32 PointInd
 void USketchingComponent::CalculateFeaturePointDirection() 
 {
 
-	if (Symbol.Strokes.Num() == 0)
+	if (NewSymbol->NumOfStroke() == 0)
 	{
 		return;
 	}
 	// If current stroke is the first stroke, set the direction of the first feature point to 0
-	else if (Symbol.Strokes.Num() == 1)
+	else if (NewSymbol->NumOfStroke() == 1)
 	{
-		Symbol.SetFeaturePointDirection(0, 0);
+		NewSymbol->SetFeaturePointDirection(0, 0);
 		UE_LOG(LogTemp, Warning, TEXT("Start point direction = %f"), 0)
 	}
 	// Else the direction of the start point will be relative to the end point of last stroke
 	else 
 	{
-		FVector2D LastEndPoint = Symbol.Strokes[Symbol.Strokes.Num() - 2].FeaturePoints.Last().Position;
-		FVector2D Direction = Symbol.GetFeaturePointPosition(0) - LastEndPoint;
+		FVector2D LastEndPoint = NewSymbol->GetStroke(NewSymbol->NumOfStroke() - 2).FeaturePoints.Last().Position;
+		FVector2D Direction = NewSymbol->GetFeaturePointPosition(0) - LastEndPoint;
 		float Angle = FMath::Atan2(Direction.Y, Direction.X);
-		Symbol.SetFeaturePointDirection(0, Angle);
+		NewSymbol->SetFeaturePointDirection(0, Angle);
 		UE_LOG(LogTemp, Warning, TEXT("Start point direction = %f"), Angle)
 	}
 
-	for (int32 i = 1; i < Symbol.Strokes.Last().FeaturePoints.Num(); i++)
+	for (int32 i = 1; i < NewSymbol->GetLastStroke().FeaturePoints.Num(); i++)
 	{
-		FVector2D Direction = Symbol.GetFeaturePointPosition(i) - Symbol.GetFeaturePointPosition(i - 1);
+		FVector2D Direction = NewSymbol->GetFeaturePointPosition(i) - NewSymbol->GetFeaturePointPosition(i - 1);
 		float Angle = FMath::Atan2(Direction.Y, Direction.X);
-		Symbol.SetFeaturePointDirection(i, Angle);
-		int32 Pri = Symbol.Strokes.Last().FeaturePoints[i].Priority;
+		NewSymbol->SetFeaturePointDirection(i, Angle);
+		int32 Pri = NewSymbol->GetLastStroke().FeaturePoints[i].Priority;
 		UE_LOG(LogTemp, Warning, TEXT("Point direction = %f, Priority = %d"), Angle, Pri)
 	}
 
