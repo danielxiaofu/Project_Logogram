@@ -205,6 +205,8 @@ void USketchingComponent::CalculateFeaturePointDirection()
 		FVector2D LastEndPoint = NewSymbol->GetStroke(NewSymbol->NumOfStroke() - 2).FeaturePoints.Last().Position;
 		FVector2D Direction = NewSymbol->GetFeaturePointPosition(0) - LastEndPoint;
 		float Angle = FMath::Atan2(Direction.Y, Direction.X);
+		if (Angle < 0)
+			Angle = PI * 2 + Angle;
 		NewSymbol->SetFeaturePointDirection(0, Angle);
 		UE_LOG(LogTemp, Warning, TEXT("Start point direction = %f"), Angle)
 	}
@@ -213,6 +215,8 @@ void USketchingComponent::CalculateFeaturePointDirection()
 	{
 		FVector2D Direction = NewSymbol->GetFeaturePointPosition(i) - NewSymbol->GetFeaturePointPosition(i - 1);
 		float Angle = FMath::Atan2(Direction.Y, Direction.X);
+		if (Angle < 0)
+			Angle = PI * 2 + Angle;
 		NewSymbol->SetFeaturePointDirection(i, Angle);
 		int32 Pri = NewSymbol->GetLastStroke().FeaturePoints[i].Priority;
 		UE_LOG(LogTemp, Warning, TEXT("Point direction = %f, Priority = %d"), Angle, Pri)

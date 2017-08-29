@@ -31,15 +31,15 @@ struct FFeaturePoint
 
 	// Local position of the point (relative to drawing frame) 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Feature Point")
-	FVector2D Position;
+		FVector2D Position;
 
 	// Angle of the line connecting this point and last feature point
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Feature Point")
-	float Direction;
+		float Direction;
 
 	// Order of the point when it is generated, start&end points have Priority 0, first generated turnpoint has priority 1, etc..
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Feature Point")
-	int32 Priority;
+		int32 Priority;
 
 };
 
@@ -48,11 +48,11 @@ struct FStroke
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stroke")
-	TArray<FVector2D> WayPoints;
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stroke")
+		TArray<FVector2D> WayPoints;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stroke")
-	TArray<FFeaturePoint> FeaturePoints;
+		TArray<FFeaturePoint> FeaturePoints;
 
 	FVector2D& GetWaypoint(int32 Index) {
 		if (Index >= WayPoints.Num())

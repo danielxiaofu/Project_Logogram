@@ -4,9 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Logogram/SymbolCharacter.h"
 #include "SketchingComponent.generated.h"
-
-class USymbolCharacter;
 
 /** This component is responsible for recieving mouse positions while drawing and use the position 
   * data to construct way points along the stroke. It also recognize turning points that will be useful
