@@ -40,9 +40,9 @@ void UBrushConstrain::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	// ...
 }
 
-FVector2D UBrushConstrain::GetConstrainDirection(FVector2D BrushPosition, FVector2D MousePosition) const
+FVector2D UBrushConstrain::GetConstrainDirection(FVector2D RawDirection) const
 {
-	FVector2D Direction = MousePosition - BrushPosition;
+	FVector2D Direction = RawDirection.GetSafeNormal();
 	float Angle = FMath::Atan2(Direction.Y, Direction.X);
 	float Half45 = PI / 8;
 	

@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SketchingComponent.h"
+#include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "Logogram/SymbolCharacter.h"
 
 // Sets default values for this component's properties
@@ -20,6 +21,10 @@ void USketchingComponent::BeginPlay()
 	Super::BeginPlay();
 	// ...
 	
+	UStaticMeshComponent* Board = GetOwner()->FindComponentByClass<UStaticMeshComponent>();
+	check(Board && "Could not find board mesh");
+	InitializeSampleDistance(Board);
+
 }
 
 // Called every frame
@@ -43,7 +48,7 @@ void USketchingComponent::StartSample(FVector2D MousePos)
 		return;
 	}
 
-	if (!MouseOutOfRange())
+	if (!DecalOutOfRange())
 	{
 		// Add waypoint
 		NewSymbol->AddStroke();
@@ -61,7 +66,7 @@ void USketchingComponent::StartSample(FVector2D MousePos)
 
 void USketchingComponent::FinishSample(FVector2D MousePos)
 {
-	if (!MouseOutOfRange())
+	if (!DecalOutOfRange())
 	{
 		NewSymbol->AddWaypoint(MousePos);
 		
@@ -79,7 +84,7 @@ void USketchingComponent::FinishSample(FVector2D MousePos)
 
 	bIsSampling = false;
 	GenerateTurningPoint(0, NewSymbol->GetLastStroke().WayPoints.Num() - 1, 1);
-	if (!MouseOutOfRange())
+	if (!DecalOutOfRange())
 	{
 		NewSymbol->AddFeaturePoint(MousePos, 0);
 	}
@@ -101,7 +106,7 @@ TArray<FVector2D> USketchingComponent::GetLastFeaturePoints()
 
 void USketchingComponent::SampleMouse()
 {
-	if (MouseOutOfRange())
+	if (DecalOutOfRange())
 	{
 		return;
 	}
@@ -138,10 +143,18 @@ void USketchingComponent::SampleMouse()
 
 }
 
-void USketchingComponent::OnWhiteboardSpawned(float Size)
+void USketchingComponent::InitializeSampleDistance(UStaticMeshComponent* BoardMesh)
 {
 	NewSymbol = NewObject<USymbolCharacter>();
 
+	/* Calculate on-screen size of the board
+	*/
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	FVector2D ScreenBottomLeft, ScreenTopRight;
+	PlayerController->ProjectWorldLocationToScreen(BoardMesh->GetSocketLocation(FName("BottomLeft")), ScreenBottomLeft);
+	PlayerController->ProjectWorldLocationToScreen(BoardMesh->GetSocketLocation(FName("TopRight")), ScreenTopRight);
+	FVector2D Diagonal = ScreenTopRight - ScreenBottomLeft;
+	float Size = FMath::Abs(Diagonal.X);
 	CanvasSize = Size;
 
 	WayPointSampleDistance = CanvasSize / MaxSamplesAcrossScreen;
@@ -224,9 +237,9 @@ void USketchingComponent::CalculateFeaturePointDirection()
 
 }
 
-bool USketchingComponent::MouseOutOfRange()
+bool USketchingComponent::DecalOutOfRange()
 {
-	return MousePosition.X < 0 || MousePosition.Y < 0;
+	return DecalPosition.X < 0 || DecalPosition.Y < 0;
 }
 
 

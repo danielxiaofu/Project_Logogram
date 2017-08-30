@@ -30,10 +30,9 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 	/** Get the direction that the brush should be constrained to
-	* @param BrushPosition local onboard position of the brush
-	* @param MousePosition local onboard position of the mouse
+	* @param RawDirection raw direction to be constrained
 	* @return constrain direction
 	*/
 	UFUNCTION(BlueprintCallable)
-	FVector2D GetConstrainDirection(FVector2D BrushPosition, FVector2D MousePosition) const;
+	FVector2D GetConstrainDirection(FVector2D RawDirection) const;
 };

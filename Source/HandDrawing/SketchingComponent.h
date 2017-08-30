@@ -7,6 +7,7 @@
 #include "Logogram/SymbolCharacter.h"
 #include "SketchingComponent.generated.h"
 
+
 /** This component is responsible for recieving mouse positions while drawing and use the position 
   * data to construct way points along the stroke. It also recognize turning points that will be useful
   * for symbol recognition.
@@ -60,14 +61,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Debug")
 	TArray<FVector2D> GetLastFeaturePoints();
 
-	/** This function should be called immediately after the whiteboard is spawned 
-	  * (in other words, before player start to draw) 
-	  * canvas size is passed in order to determine the sample distance
-	  * @param Size size of the drawing canvas(in raw screen scale)
-	  */
-	UFUNCTION(BlueprintCallable, Category = "Drawing")
-	void OnWhiteboardSpawned(float Size);
-
 private:
 
 	/** Max number of waypoints on a stroke that lie horizontally across the canvas 
@@ -85,6 +78,11 @@ private:
 	float WayPointSampleDistance = -1; // Distance between way points
 	bool bIsSampling = false;
 
+	/** Given board mesh, decide sample distance based on size of the board
+	* @param BoardMesh static mesh of the board
+	*/
+	void InitializeSampleDistance(class UStaticMeshComponent* BoardMesh);
+
 	void SampleMouse();
 
 	/** Create a turing point between two given waypoints on the newest stroke
@@ -98,5 +96,5 @@ private:
 	// Calculate the direction of feature point for current stroke, should be called after turning points are generated
 	void CalculateFeaturePointDirection();
 
-	bool MouseOutOfRange();
+	bool DecalOutOfRange();
 };
