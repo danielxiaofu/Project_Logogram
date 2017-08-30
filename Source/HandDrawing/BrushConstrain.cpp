@@ -20,7 +20,15 @@ void UBrushConstrain::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	
+	North = FVector2D(0, 1);
+	South = FVector2D(0, -1);
+	East = FVector2D(1, 0);
+	West = FVector2D(-1, 0);
+
+	NorthEast = (North + East).GetSafeNormal();
+	NorthWest = (North + West).GetSafeNormal();
+	SouthEast = (South + East).GetSafeNormal();
+	SouthWest = (South + West).GetSafeNormal();
 }
 
 
@@ -32,9 +40,30 @@ void UBrushConstrain::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	// ...
 }
 
-void UBrushConstrain::SetBoardAxis(FVector Horizontal, FVector Vertical)
+FVector2D UBrushConstrain::GetConstrainDirection(FVector2D BrushPosition, FVector2D MousePosition) const
 {
-	North = Vertical;
-	East = Horizontal;
+	FVector2D Direction = MousePosition - BrushPosition;
+	float Angle = FMath::Atan2(Direction.Y, Direction.X);
+	float Half45 = PI / 8;
+	
+	if (-Half45 <= Angle && Angle < Half45)
+		Direction = East;
+	else if (Half45 <= Angle && Angle < 3 * Half45)
+		Direction = NorthEast;
+	else if (3 * Half45 <= Angle && Angle < 5 * Half45)
+		Direction = North;
+	else if (5 * Half45 <= Angle && Angle < 7 * Half45)
+		Direction = NorthWest;
+	else if ((7 * Half45 <= Angle && Angle <= 8 * Half45) || (-8 * Half45 <= Angle && Angle < -7 * Half45))
+		Direction = West;
+	else if (-7 * Half45 <= Angle && Angle < -5 * Half45)
+		Direction = SouthWest;
+	else if (-5 * Half45 <= Angle && Angle < -3 * Half45)
+		Direction = South;
+	else
+		Direction = SouthEast;
+
+	return Direction.GetSafeNormal();
 }
+
 

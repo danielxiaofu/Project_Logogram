@@ -23,18 +23,17 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	FVector North, South, East, West, NorthEast, NorthWest, SouthEast, SouthWest;
+	FVector2D North, South, East, West, NorthEast, NorthWest, SouthEast, SouthWest;
 
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	/** Set the board axis in order to get eight local directions
-	* @param Horizontal normalized horizontal axis
-	* @param Vertical normalized vertical axis
-	*/
-	UFUNCTION(BlueprintCallable, Category = "Setup")
-	void SetBoardAxis(FVector Horizontal, FVector Vertical);
 	
-
+	/** Get the direction that the brush should be constrained to
+	* @param BrushPosition local onboard position of the brush
+	* @param MousePosition local onboard position of the mouse
+	* @return constrain direction
+	*/
+	UFUNCTION(BlueprintCallable)
+	FVector2D GetConstrainDirection(FVector2D BrushPosition, FVector2D MousePosition) const;
 };
