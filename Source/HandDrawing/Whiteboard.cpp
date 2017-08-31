@@ -28,10 +28,6 @@ void AWhiteboard::BeginPlay()
 	BoardAxisY = (TopLeft - BottomLeft).GetSafeNormal();
 	BoardAxisX = (BottomRight - BottomLeft).GetSafeNormal();
 
-	/* Construct screen on-board coordinate system
-	*/
-
-
 }
 
 // Called every frame
@@ -40,6 +36,16 @@ void AWhiteboard::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateBrushDirection();
+}
+
+void AWhiteboard::StartDraw()
+{
+	bIsDrawing = true;
+}
+
+void AWhiteboard::EndDraw()
+{
+	bIsDrawing = false;
 }
 
 void AWhiteboard::UpdateBrushDirection()

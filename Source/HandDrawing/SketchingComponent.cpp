@@ -21,9 +21,11 @@ void USketchingComponent::BeginPlay()
 	Super::BeginPlay();
 	// ...
 	
-	UStaticMeshComponent* Board = GetOwner()->FindComponentByClass<UStaticMeshComponent>();
+	PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+	Board = GetOwner()->FindComponentByClass<UStaticMeshComponent>();
 	check(Board && "Could not find board mesh");
-	InitializeSampleDistance(Board);
+	InitializeSampleDistance();
 
 }
 
@@ -32,15 +34,14 @@ void USketchingComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
-	if (bIsSampling) 
-	{
-		SampleMouse();
-	}
 	// ...
 }
 
-void USketchingComponent::StartSample(FVector2D MousePos)
+void USketchingComponent::StartSample(FVector WorldBrushPos)
 {
+	if (bIsSampling)
+		return;
+
 	// Check if canvas size is set properly
 	if (CanvasSize == -1 || WayPointSampleDistance == -1)
 	{
@@ -48,29 +49,38 @@ void USketchingComponent::StartSample(FVector2D MousePos)
 		return;
 	}
 
-	if (!DecalOutOfRange())
+	FVector2D BrushPos;
+	ConvertWorldToLocalBoard(WorldBrushPos, BrushPos);
+
+	if (!OutOfRange(WorldBrushPos))
 	{
 		// Add waypoint
 		NewSymbol->AddStroke();
-		NewSymbol->AddWaypoint(MousePos);
-		LastSamplePoint = MousePos;
+		NewSymbol->AddWaypoint(BrushPos);
+		LastSamplePoint = BrushPos;
 
 		// Add feature point
-		NewSymbol->AddFeaturePoint(MousePos, 0);
+		NewSymbol->AddFeaturePoint(BrushPos, 0);
 
-		WaypointDelegate.Broadcast(MousePos);
+		WaypointDelegate.Broadcast(BrushPos);
 	}
 	
 	bIsSampling = true;
 }
 
-void USketchingComponent::FinishSample(FVector2D MousePos)
+void USketchingComponent::FinishSample(FVector WorldBrushPos)
 {
-	if (!DecalOutOfRange())
+	if (!bIsSampling)
+		return;
+
+	FVector2D BrushPos;
+	ConvertWorldToLocalBoard(WorldBrushPos, BrushPos);
+
+	if (!OutOfRange(WorldBrushPos))
 	{
-		NewSymbol->AddWaypoint(MousePos);
+		NewSymbol->AddWaypoint(BrushPos);
 		
-		WaypointDelegate.Broadcast(MousePos);
+		WaypointDelegate.Broadcast(BrushPos);
 		// Debug, print all waypoints
 		//for (FVector2D WayPoint : Symbol.Strokes.Last().WayPoints) 
 		//{
@@ -83,13 +93,60 @@ void USketchingComponent::FinishSample(FVector2D MousePos)
 	}
 
 	bIsSampling = false;
+
+	// Generate turn point from the first point to the last point
 	GenerateTurningPoint(0, NewSymbol->GetLastStroke().WayPoints.Num() - 1, 1);
-	if (!DecalOutOfRange())
+
+	// Assign end point to the last feature point
+	if (!OutOfRange(WorldBrushPos))
 	{
-		NewSymbol->AddFeaturePoint(MousePos, 0);
+		NewSymbol->AddFeaturePoint(BrushPos, 0);
 	}
 	
 	CalculateFeaturePointDirection();
+
+}
+
+void USketchingComponent::ReqestToAddSample(FVector WorldBrushPos)
+{
+	if (!bIsSampling)
+		return;
+
+	if (OutOfRange(WorldBrushPos))
+		return;
+
+	FVector2D BrushPos;
+	ConvertWorldToLocalBoard(WorldBrushPos, BrushPos);
+
+	float DistanceSquared = FVector2D::DistSquared(BrushPos, LastSamplePoint);
+
+	if (DistanceSquared > WayPointSampleDistance * WayPointSampleDistance)
+	{
+		NewSymbol->AddWaypoint(BrushPos);
+
+		/** If the distance is greater than twice of the sample distance, there may be a gap between two points,
+		* therefore additional points should be added to the gap
+		*/
+		if (DistanceSquared > 4 * WayPointSampleDistance * WayPointSampleDistance)
+		{
+			FVector2D Direction = (BrushPos - LastSamplePoint).GetSafeNormal();
+			float Distance = FMath::Sqrt(DistanceSquared);
+			int32 NumOfPoints = static_cast<int32>(Distance / WayPointSampleDistance);
+			for (int32 i = 0; i < NumOfPoints; i++)
+			{
+				FVector2D NewPoint = LastSamplePoint + (Direction * WayPointSampleDistance);
+				NewSymbol->AddWaypoint(NewPoint);
+				LastSamplePoint = NewPoint;
+
+				WaypointDelegate.Broadcast(NewPoint); // TODO Refact broadcasting system
+			}
+		}
+
+		LastSamplePoint = BrushPos;
+		WaypointDelegate.Broadcast(BrushPos);
+
+	}
+
 
 }
 
@@ -103,56 +160,15 @@ TArray<FVector2D> USketchingComponent::GetLastFeaturePoints()
 	return NewSymbol->GetLastFeaturePointArray();
 }
 
-
-void USketchingComponent::SampleMouse()
-{
-	if (DecalOutOfRange())
-	{
-		return;
-	}
-
-	float DistanceSquared = FVector2D::DistSquared(DecalPosition, LastSamplePoint);
-
-	if (DistanceSquared > WayPointSampleDistance * WayPointSampleDistance)
-	{
-		NewSymbol->AddWaypoint(DecalPosition);
-
-		/** If the distance is greater than twice of the sample distance, there may be a gap between two points,
-		* therefore additional points should be added to the gap
-		*/
-		if (DistanceSquared > 4 * WayPointSampleDistance * WayPointSampleDistance)
-		{
-			FVector2D Direction = (DecalPosition - LastSamplePoint).GetSafeNormal();
-			float Distance = FMath::Sqrt(DistanceSquared);
-			int32 NumOfPoints = static_cast<int32>(Distance / WayPointSampleDistance);
-			for (int32 i = 0; i < NumOfPoints; i++)
-			{
-				FVector2D NewPoint = LastSamplePoint + (Direction * WayPointSampleDistance);
-				NewSymbol->AddWaypoint(NewPoint);
-				LastSamplePoint = NewPoint;
-
-				WaypointDelegate.Broadcast(NewPoint);
-			}
-		}
-
-		LastSamplePoint = DecalPosition;
-		WaypointDelegate.Broadcast(DecalPosition);
-
-	}
-
-
-}
-
-void USketchingComponent::InitializeSampleDistance(UStaticMeshComponent* BoardMesh)
+void USketchingComponent::InitializeSampleDistance()
 {
 	NewSymbol = NewObject<USymbolCharacter>();
 
 	/* Calculate on-screen size of the board
 	*/
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	FVector2D ScreenBottomLeft, ScreenTopRight;
-	PlayerController->ProjectWorldLocationToScreen(BoardMesh->GetSocketLocation(FName("BottomLeft")), ScreenBottomLeft);
-	PlayerController->ProjectWorldLocationToScreen(BoardMesh->GetSocketLocation(FName("TopRight")), ScreenTopRight);
+	PlayerController->ProjectWorldLocationToScreen(Board->GetSocketLocation(FName("BottomLeft")), ScreenBottomLeft);
+	PlayerController->ProjectWorldLocationToScreen(Board->GetSocketLocation(FName("TopRight")), ScreenTopRight);
 	FVector2D Diagonal = ScreenTopRight - ScreenBottomLeft;
 	float Size = FMath::Abs(Diagonal.X);
 	CanvasSize = Size;
@@ -237,9 +253,27 @@ void USketchingComponent::CalculateFeaturePointDirection()
 
 }
 
-bool USketchingComponent::DecalOutOfRange()
+void USketchingComponent::ConvertWorldToLocalBoard(FVector WorldPos, FVector2D& LocalPos)
 {
-	return DecalPosition.X < 0 || DecalPosition.Y < 0;
+	FVector2D ScreenBottomLeft;
+	PlayerController->ProjectWorldLocationToScreen(Board->GetSocketLocation(FName("BottomLeft")), ScreenBottomLeft);
+	FVector2D ScreenPosition;
+	PlayerController->ProjectWorldLocationToScreen(WorldPos, ScreenPosition);
+	FVector2D LocalPosition = ScreenPosition - ScreenBottomLeft;
+	LocalPos.X = LocalPosition.X;
+	LocalPos.Y = LocalPosition.Y;
+}
+
+void USketchingComponent::BroadCastLocalToWorld(FVector2D & LocalPos)
+{
+
+}
+
+bool USketchingComponent::OutOfRange(FVector WorldPos)
+{
+	FVector2D LocalPosition;
+	ConvertWorldToLocalBoard(WorldPos, LocalPosition);
+	return LocalPosition.X < 0 || LocalPosition.Y < 0 || LocalPosition.X > CanvasSize || LocalPosition.Y > CanvasSize;
 }
 
 

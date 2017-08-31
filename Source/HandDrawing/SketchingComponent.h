@@ -27,7 +27,7 @@ protected:
 
 public:	
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVectorDelegate, const FVector2D&, Position);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVectorDelegate, const FVector&, WorldPosition);
 
 	USketchingComponent();
 
@@ -36,22 +36,25 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Drawing")
 	FVectorDelegate WaypointDelegate;
 
-	UPROPERTY(BlueprintReadWrite)
-	FVector2D MousePosition;
-
-	UPROPERTY(BlueprintReadWrite)
-	FVector2D DecalPosition;
-
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	// Start sampling stroke, takes mouse position as the start way point
+	/** Start sampling stroke, takes brush position as start waypoint
+	 * @param BrushPos world position of the brush
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Drawing")
-	void StartSample(FVector2D MousePos);
+	void StartSample(FVector WorldBrushPos);
 
-	// Finish sampling stroke, takes mouse position as the end way point
+	/** Finish sampling stroke, takes brush position as end wa point
+	 * @param BrushPos world position of the brush
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Drawing")
-	void FinishSample(FVector2D MousePos);
+	void FinishSample(FVector WorldBrushPos);
+
+	/** Request to add a sample point, should only be called during sampling
+	 * @param BrushPos world position of the brush
+	 */
+	void ReqestToAddSample(FVector WorldBrushPos);
 
 	// Debug only, get waypoints in the last stroke
 	UFUNCTION(BlueprintCallable, Category = "Debug")
@@ -64,13 +67,19 @@ public:
 private:
 
 	/** Max number of waypoints on a stroke that lie horizontally across the canvas 
-	* This is a way of determing the distance between waypoints, we do not use
-	* distance directly because screen size may varies from platform
-	*/
+	 * This is a way of determing the distance between waypoints, we do not use
+	 * distance directly because screen size may varies from platform
+	 */
 	const int32 MaxSamplesAcrossScreen = 60;
 
 	UPROPERTY()
 	USymbolCharacter* NewSymbol;
+
+	UPROPERTY()
+	UStaticMeshComponent* Board;
+
+	UPROPERTY()
+	APlayerController* PlayerController;
 
 	FVector2D LastSamplePoint;
 
@@ -79,11 +88,9 @@ private:
 	bool bIsSampling = false;
 
 	/** Given board mesh, decide sample distance based on size of the board
-	* @param BoardMesh static mesh of the board
-	*/
-	void InitializeSampleDistance(class UStaticMeshComponent* BoardMesh);
-
-	void SampleMouse();
+	 * @param BoardMesh static mesh of the board
+	 */
+	void InitializeSampleDistance();
 
 	/** Create a turing point between two given waypoints on the newest stroke
 	 * @param PointIndex1 index of the start point 
@@ -96,5 +103,20 @@ private:
 	// Calculate the direction of feature point for current stroke, should be called after turning points are generated
 	void CalculateFeaturePointDirection();
 
-	bool DecalOutOfRange();
+	/** Convert world position to board's local on-screen position with bottomleft being (0, 0)
+	 * @param WorldPos world position
+	 * @param LocalPos out parameter, converted local on-screen position 
+	 */
+	void ConvertWorldToLocalBoard(FVector WorldPos, FVector2D& LocalPos);
+
+	/** Convert board's local on-screen position to world position and broadcast to all listeners
+	 * @param LocalPos local position to be converted
+	 */
+	void BroadCastLocalToWorld(FVector2D& LocalPos);
+
+	/** Test if a world position is out of the board
+	* @param WorldPos world position
+	* @return true if position is in board, false if not
+	*/
+	bool OutOfRange(FVector WorldPos);
 };

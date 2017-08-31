@@ -32,6 +32,15 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	FVector2D BrushVelocity;
 	
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsDrawing;
+
+	UFUNCTION(BlueprintCallable)
+	void StartDraw();
+
+	UFUNCTION(BlueprintCallable)
+	void EndDraw();
+
 	UFUNCTION(BlueprintImplementableEvent)
 	void BrushDirectionUpdated(FVector BrushDirection);
 
