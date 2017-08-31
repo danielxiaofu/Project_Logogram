@@ -56,13 +56,21 @@ public:
 	 */
 	void ReqestToAddSample(FVector WorldBrushPos);
 
+	/** Set board axis in order to convert from screen position to world on-board pos
+	* @param AxisX non-normalized X axis of the board 
+	* @param AxisY non-normalized Y axis of the board
+	*/
+	void SetBoardRawAxis(FVector AxisX, FVector AxisY);
+
 	// Debug only, get waypoints in the last stroke
 	UFUNCTION(BlueprintCallable, Category = "Debug")
-	TArray<FVector2D> GetLastWaypoints();
+	TArray<FVector> GetLastWaypoints();
 
 	// Debug only, get featurepoints in the last stroke
 	UFUNCTION(BlueprintCallable, Category = "Debug")
-	TArray<FVector2D> GetLastFeaturePoints();
+	TArray<FVector> GetLastFeaturePoints();
+
+
 
 private:
 
@@ -82,6 +90,9 @@ private:
 	APlayerController* PlayerController;
 
 	FVector2D LastSamplePoint;
+
+	FVector BoardRawAxisX = FVector(0);
+	FVector BoardRawAxisY = FVector(0);
 
 	float CanvasSize = -1;
 	float WayPointSampleDistance = -1; // Distance between way points
@@ -109,14 +120,9 @@ private:
 	 */
 	void ConvertWorldToLocalBoard(FVector WorldPos, FVector2D& LocalPos);
 
-	/** Convert board's local on-screen position to world position and broadcast to all listeners
+	/** Convert board's local on-screen position to world position
 	 * @param LocalPos local position to be converted
+	 * @param WorldPos out parameter, world position
 	 */
-	void BroadCastLocalToWorld(FVector2D& LocalPos);
-
-	/** Test if a world position is out of the board
-	* @param WorldPos world position
-	* @return true if position is in board, false if not
-	*/
-	bool OutOfRange(FVector WorldPos);
+	FVector ConvertLocalBoardToWorld(const FVector2D& LocalPos);
 };

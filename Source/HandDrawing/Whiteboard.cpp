@@ -2,7 +2,7 @@
 
 #include "Whiteboard.h"
 #include "SketchingComponent.h"
-#include "BrushConstrain.h"
+#include "BrushMovementComponent.h"
 
 // Sets default values
 AWhiteboard::AWhiteboard()
@@ -11,7 +11,7 @@ AWhiteboard::AWhiteboard()
 	PrimaryActorTick.bCanEverTick = true;
 
 	SketchingComponent = CreateDefaultSubobject<USketchingComponent>(TEXT("SketchingComponent"));
-	BrushConstrain = CreateDefaultSubobject<UBrushConstrain>(TEXT("BrushConstrain"));
+	BrushMovementComponent = CreateDefaultSubobject<UBrushMovementComponent>(TEXT("BrushMovement"));
 }
 
 // Called when the game starts or when spawned
@@ -27,36 +27,33 @@ void AWhiteboard::BeginPlay()
 	FVector BottomRight = BoardMesh->GetSocketLocation(FName("BottomRight"));
 	BoardAxisY = (TopLeft - BottomLeft).GetSafeNormal();
 	BoardAxisX = (BottomRight - BottomLeft).GetSafeNormal();
-
+	// Pass board axises to child components
+	SketchingComponent->SetBoardRawAxis(BottomRight - BottomLeft, TopLeft - BottomLeft);
+	BrushMovementComponent->SetBoardAxis(BoardAxisX, BoardAxisY, BottomLeft, BoardMesh->GetSocketLocation(FName("TopRight")));
 }
 
 // Called every frame
 void AWhiteboard::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	UpdateBrushDirection();
+	if (bIsDrawing)
+		SketchingComponent->ReqestToAddSample(BrushMovementComponent->BrushPosition);
 }
 
 void AWhiteboard::StartDraw()
 {
 	bIsDrawing = true;
+	SketchingComponent->StartSample(BrushMovementComponent->BrushPosition);
 }
 
 void AWhiteboard::EndDraw()
 {
+	SketchingComponent->FinishSample(BrushMovementComponent->BrushPosition);
 	bIsDrawing = false;
+
 }
 
-void AWhiteboard::UpdateBrushDirection()
-{
-	if (BrushVelocity.SizeSquared() == 0)
-		return;
 
-	FVector2D Direction = BrushConstrain->GetConstrainDirection(BrushVelocity.GetSafeNormal());
-	FVector WorldDirection = BoardAxisX * Direction.X + BoardAxisY * Direction.Y;
 
-	FVector FinalDirection = BrushVelocity.SizeSquared() > 1 ? WorldDirection.GetSafeNormal() : WorldDirection.GetSafeNormal() * BrushVelocity.Size();
-	BrushDirectionUpdated(FinalDirection);
-}
+
 

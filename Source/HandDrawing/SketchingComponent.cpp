@@ -52,18 +52,15 @@ void USketchingComponent::StartSample(FVector WorldBrushPos)
 	FVector2D BrushPos;
 	ConvertWorldToLocalBoard(WorldBrushPos, BrushPos);
 
-	if (!OutOfRange(WorldBrushPos))
-	{
-		// Add waypoint
-		NewSymbol->AddStroke();
-		NewSymbol->AddWaypoint(BrushPos);
-		LastSamplePoint = BrushPos;
+	// Add waypoint
+	NewSymbol->AddStroke();
+	NewSymbol->AddWaypoint(BrushPos);
+	LastSamplePoint = BrushPos;
 
-		// Add feature point
-		NewSymbol->AddFeaturePoint(BrushPos, 0);
+	// Add feature point
+	NewSymbol->AddFeaturePoint(BrushPos, 0);
 
-		WaypointDelegate.Broadcast(BrushPos);
-	}
+	WaypointDelegate.Broadcast(ConvertLocalBoardToWorld(BrushPos));
 	
 	bIsSampling = true;
 }
@@ -76,21 +73,19 @@ void USketchingComponent::FinishSample(FVector WorldBrushPos)
 	FVector2D BrushPos;
 	ConvertWorldToLocalBoard(WorldBrushPos, BrushPos);
 
-	if (!OutOfRange(WorldBrushPos))
-	{
-		NewSymbol->AddWaypoint(BrushPos);
-		
-		WaypointDelegate.Broadcast(BrushPos);
-		// Debug, print all waypoints
-		//for (FVector2D WayPoint : Symbol.Strokes.Last().WayPoints) 
-		//{
-		//	FString PositionString = WayPoint.ToString();
-		//	
-		//	//UE_LOG(LogTemp, Warning, TEXT("Final WayPoint: %s"), *PositionString)
-		//}
 
-		//UE_LOG(LogTemp, Warning, TEXT("Final Num of waypoints: %d"), Symbol.Strokes.Last().WayPoints.Num())
-	}
+	NewSymbol->AddWaypoint(BrushPos);
+		
+	WaypointDelegate.Broadcast(ConvertLocalBoardToWorld(BrushPos));
+	// Debug, print all waypoints
+	//for (FVector2D WayPoint : Symbol.Strokes.Last().WayPoints) 
+	//{
+	//	FString PositionString = WayPoint.ToString();
+	//	
+	//	//UE_LOG(LogTemp, Warning, TEXT("Final WayPoint: %s"), *PositionString)
+	//}
+
+	//UE_LOG(LogTemp, Warning, TEXT("Final Num of waypoints: %d"), Symbol.Strokes.Last().WayPoints.Num())
 
 	bIsSampling = false;
 
@@ -98,10 +93,7 @@ void USketchingComponent::FinishSample(FVector WorldBrushPos)
 	GenerateTurningPoint(0, NewSymbol->GetLastStroke().WayPoints.Num() - 1, 1);
 
 	// Assign end point to the last feature point
-	if (!OutOfRange(WorldBrushPos))
-	{
-		NewSymbol->AddFeaturePoint(BrushPos, 0);
-	}
+	NewSymbol->AddFeaturePoint(BrushPos, 0);
 	
 	CalculateFeaturePointDirection();
 
@@ -110,9 +102,6 @@ void USketchingComponent::FinishSample(FVector WorldBrushPos)
 void USketchingComponent::ReqestToAddSample(FVector WorldBrushPos)
 {
 	if (!bIsSampling)
-		return;
-
-	if (OutOfRange(WorldBrushPos))
 		return;
 
 	FVector2D BrushPos;
@@ -137,27 +126,47 @@ void USketchingComponent::ReqestToAddSample(FVector WorldBrushPos)
 				FVector2D NewPoint = LastSamplePoint + (Direction * WayPointSampleDistance);
 				NewSymbol->AddWaypoint(NewPoint);
 				LastSamplePoint = NewPoint;
-
-				WaypointDelegate.Broadcast(NewPoint); // TODO Refact broadcasting system
+				WaypointDelegate.Broadcast(ConvertLocalBoardToWorld(NewPoint)); // TODO Refact broadcasting system
 			}
 		}
 
 		LastSamplePoint = BrushPos;
-		WaypointDelegate.Broadcast(BrushPos);
+		WaypointDelegate.Broadcast(ConvertLocalBoardToWorld(BrushPos));
 
 	}
 
 
 }
 
-TArray<FVector2D> USketchingComponent::GetLastWaypoints()
+void USketchingComponent::SetBoardRawAxis(FVector AxisX, FVector AxisY)
 {
-	return NewSymbol->GetLastWaypointArray();
+	BoardRawAxisX = AxisX;
+	BoardRawAxisY = AxisY;
 }
 
-TArray<FVector2D> USketchingComponent::GetLastFeaturePoints()
+TArray<FVector> USketchingComponent::GetLastWaypoints()
 {
-	return NewSymbol->GetLastFeaturePointArray();
+	TArray<FVector2D> Waypoints = NewSymbol->GetLastWaypointArray();
+	TArray<FVector> WorldWaypoints;
+	for (int32 i = 0; i < Waypoints.Num(); i++)
+	{
+		FVector WorldWaypoint = ConvertLocalBoardToWorld(Waypoints[i]);
+		WorldWaypoints.Add(WorldWaypoint);
+	}
+	return WorldWaypoints;
+}
+
+TArray<FVector> USketchingComponent::GetLastFeaturePoints()
+{
+	TArray<FVector2D> FeaturePoints = NewSymbol->GetLastFeaturePointArray();
+	TArray<FVector> WorldFeaturePoints;
+	for (int32 i = 0; i < FeaturePoints.Num(); i++)
+	{
+		FVector WorldFeaturePoint = ConvertLocalBoardToWorld(FeaturePoints[i]);
+		WorldFeaturePoints.Add(WorldFeaturePoint);
+	}
+
+	return WorldFeaturePoints;
 }
 
 void USketchingComponent::InitializeSampleDistance()
@@ -264,16 +273,22 @@ void USketchingComponent::ConvertWorldToLocalBoard(FVector WorldPos, FVector2D& 
 	LocalPos.Y = LocalPosition.Y;
 }
 
-void USketchingComponent::BroadCastLocalToWorld(FVector2D & LocalPos)
+FVector USketchingComponent::ConvertLocalBoardToWorld(const FVector2D & LocalPos)
 {
+	if (BoardRawAxisX.IsZero() || BoardRawAxisY.IsZero())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Unable to convert from local to world because board axis is zero vector, call SetBoardAxis before doing conversion"))
+		return FVector(0);
+	}
 
-}
+	float XRatio = LocalPos.X / CanvasSize;
+	float YRatio = LocalPos.Y / CanvasSize;
 
-bool USketchingComponent::OutOfRange(FVector WorldPos)
-{
-	FVector2D LocalPosition;
-	ConvertWorldToLocalBoard(WorldPos, LocalPosition);
-	return LocalPosition.X < 0 || LocalPosition.Y < 0 || LocalPosition.X > CanvasSize || LocalPosition.Y > CanvasSize;
+	FVector WorldOnBoard = BoardRawAxisX * XRatio + BoardRawAxisY * YRatio * -1;
+
+	//UE_LOG(LogTemp, Warning, TEXT("WorldOnBoard = %s"), *(WorldOnBoard.ToString()))
+
+	return WorldOnBoard + Board->GetSocketLocation(FName("BottomLeft"));
 }
 
 

@@ -7,7 +7,7 @@
 #include "Whiteboard.generated.h"
 
 class USketchingComponent;
-class UBrushConstrain;
+class UBrushMovementComponent;
 
 UCLASS()
 class HANDDRAWING_API AWhiteboard : public AActor
@@ -23,17 +23,15 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(BlueprintReadOnly)
 	USketchingComponent* SketchingComponent;
 
-	UPROPERTY(BlueprintReadWrite)
-	FVector2D BrushVelocity;
-	
 	UPROPERTY(BlueprintReadOnly)
-	bool bIsDrawing;
+	UBrushMovementComponent* BrushMovementComponent;
+
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable)
 	void StartDraw();
@@ -41,20 +39,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void EndDraw();
 
-	UFUNCTION(BlueprintImplementableEvent)
-	void BrushDirectionUpdated(FVector BrushDirection);
-
 private:
-	UPROPERTY()
-	UBrushConstrain* BrushConstrain;
 
 	UPROPERTY()
 	UStaticMeshComponent* BoardMesh;
 
+	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess=true))
+	bool bIsDrawing;
+
 	FVector BoardAxisY, BoardAxisX;
-
-	
-
-	void UpdateBrushDirection();
 
 };
