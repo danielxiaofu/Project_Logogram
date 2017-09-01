@@ -48,8 +48,8 @@ struct FStroke
 {
 	GENERATED_BODY()
 
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stroke")
-		TArray<FVector2D> WayPoints;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stroke")
+	TArray<FVector2D> WayPoints;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stroke")
 		TArray<FFeaturePoint> FeaturePoints;

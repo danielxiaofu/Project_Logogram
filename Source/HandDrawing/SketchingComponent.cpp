@@ -270,7 +270,7 @@ void USketchingComponent::ConvertWorldToLocalBoard(FVector WorldPos, FVector2D& 
 	PlayerController->ProjectWorldLocationToScreen(WorldPos, ScreenPosition);
 	FVector2D LocalPosition = ScreenPosition - ScreenBottomLeft;
 	LocalPos.X = LocalPosition.X;
-	LocalPos.Y = LocalPosition.Y;
+	LocalPos.Y = -LocalPosition.Y; // flip Y axis so that up is positive
 }
 
 FVector USketchingComponent::ConvertLocalBoardToWorld(const FVector2D & LocalPos)
@@ -281,10 +281,10 @@ FVector USketchingComponent::ConvertLocalBoardToWorld(const FVector2D & LocalPos
 		return FVector(0);
 	}
 
-	float XRatio = LocalPos.X / CanvasSize;
-	float YRatio = LocalPos.Y / CanvasSize;
+	float XRatio = FMath::Abs(LocalPos.X) / CanvasSize;
+	float YRatio = FMath::Abs(LocalPos.Y) / CanvasSize;
 
-	FVector WorldOnBoard = BoardRawAxisX * XRatio + BoardRawAxisY * YRatio * -1;
+	FVector WorldOnBoard = BoardRawAxisX * XRatio + BoardRawAxisY * YRatio;
 
 	//UE_LOG(LogTemp, Warning, TEXT("WorldOnBoard = %s"), *(WorldOnBoard.ToString()))
 
