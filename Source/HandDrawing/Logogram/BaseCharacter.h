@@ -25,7 +25,7 @@ struct FStrokeDiractions
 /** Base class for all symbol characters in library
  * 
  */
-UCLASS()
+UCLASS(BlueprintType)
 class HANDDRAWING_API UBaseCharacter : public UObject
 {
 	GENERATED_BODY()

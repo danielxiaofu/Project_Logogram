@@ -6,15 +6,18 @@
 #include "UObject/NoExportTypes.h"
 #include "CharacterLibrary.generated.h"
 
-/** This class contains all pre-defined characters
+/** 
  * 
  */
-UCLASS(BlueprintType, Blueprintable)
+UCLASS()
 class HANDDRAWING_API UCharacterLibrary : public UObject
 {
 	GENERATED_BODY()
 	
-	
-	
+private:
+
+
+public:
+	void Initialize();
 	
 };

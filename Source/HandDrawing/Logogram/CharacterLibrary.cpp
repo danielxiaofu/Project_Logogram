@@ -2,6 +2,7 @@
 
 #include "CharacterLibrary.h"
 
+void UCharacterLibrary::Initialize()
+{
 
-
-
+}
