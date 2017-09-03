@@ -25,5 +25,4 @@ private:
 	UPROPERTY()
 	UCharacterLibrary* CharacterLibrary = nullptr;
 	
-
 };

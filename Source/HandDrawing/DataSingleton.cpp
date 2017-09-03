@@ -6,15 +6,16 @@
 UDataSingleton::UDataSingleton(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	
+	UE_LOG(LogTemp, Warning, TEXT("Singleton created"))
 }
 
 UCharacterLibrary * UDataSingleton::GetCharacterLibrary()
 {
-	if (!CharacterLibrary)
+	if (!CharacterLibrary->bHasInitialized)
 	{
 		CharacterLibrary = NewObject<UCharacterLibrary>();
 		CharacterLibrary->Initialize();
+
 	}
 
 	return CharacterLibrary;

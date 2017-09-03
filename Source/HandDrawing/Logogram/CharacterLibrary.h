@@ -15,9 +15,10 @@ class HANDDRAWING_API UCharacterLibrary : public UObject
 	GENERATED_BODY()
 	
 private:
-
+	
 
 public:
 	void Initialize();
 	
+	bool bHasInitialized = false;
 };
