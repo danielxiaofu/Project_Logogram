@@ -17,12 +17,8 @@ class HANDDRAWING_API UDataSingleton : public UObject
 	
 public:
 	UDataSingleton(const FObjectInitializer& ObjectInitializer);
-	
-	UFUNCTION(BlueprintCallable)
-	UCharacterLibrary* GetCharacterLibrary();
 
 private:
-	UPROPERTY()
-	UCharacterLibrary* CharacterLibrary = nullptr;
+
 	
 };

@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "DataSingleton.h"
 #include "DataSingletonFunctionLibrary.generated.h"
 
+class UCharacterLibrary;
 /**
  * 
  */
@@ -15,11 +15,15 @@ class HANDDRAWING_API UDataSingletonFunctionLibrary : public UBlueprintFunctionL
 {
 	GENERATED_BODY()
 	
+private:
+	static UCharacterLibrary* CharacterLibrary;
+
 public:
 
-	UFUNCTION(BlueprintPure, Category = "Data Singleton")
-	static UDataSingleton* GetDataSingleton(bool& IsValid);
 	
+
+	UFUNCTION(BlueprintCallable, Category = "CharacterLibrary")
+	static UCharacterLibrary* GetCharacterLibrary();
 	
 	
 };
