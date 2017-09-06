@@ -3,6 +3,7 @@
 #include "Whiteboard.h"
 #include "SketchingComponent.h"
 #include "BrushMovementComponent.h"
+#include "SymbolRecognizer.h"
 
 // Sets default values
 AWhiteboard::AWhiteboard()
@@ -12,6 +13,9 @@ AWhiteboard::AWhiteboard()
 
 	SketchingComponent = CreateDefaultSubobject<USketchingComponent>(TEXT("SketchingComponent"));
 	BrushMovementComponent = CreateDefaultSubobject<UBrushMovementComponent>(TEXT("BrushMovement"));
+	SymbolRecognizer = CreateDefaultSubobject<USymbolRecognizer>(TEXT("SymbolRecognizer"));
+
+	SymbolRecognizer->OnSketchingComponentCreated(SketchingComponent);
 }
 
 // Called when the game starts or when spawned

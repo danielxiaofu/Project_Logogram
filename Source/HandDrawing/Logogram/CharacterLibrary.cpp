@@ -47,9 +47,15 @@ void UCharacterLibrary::ReadCharacter()
 
 			UE_LOG(LogTemp, Warning, TEXT("Character retrieved: %s"), *(NewCharacter.ToString()))
 		}
+		bHasInitialized = true;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("File not deserializable"))
+		bHasInitialized = false;
 	}
 
-	bHasInitialized = true;
+	
 }
 
 FLibraryCharacter& UCharacterLibrary::AddNewCharacter(FString CharName, int32 TypeInt)

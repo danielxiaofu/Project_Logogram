@@ -20,8 +20,6 @@ private:
 
 public:
 
-	
-
 	UFUNCTION(BlueprintCallable, Category = "CharacterLibrary")
 	static UCharacterLibrary* GetCharacterLibrary();
 	

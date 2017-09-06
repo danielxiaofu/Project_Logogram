@@ -7,7 +7,6 @@
 #include "Logogram/SymbolCharacter.h"
 #include "SketchingComponent.generated.h"
 
-
 /** This component is responsible for recieving mouse positions while drawing and use the position 
   * data to construct way points along the stroke. It also recognize turning points that will be useful
   * for symbol recognition.
@@ -28,6 +27,8 @@ protected:
 public:	
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVectorDelegate, const FVector&, WorldPosition);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFeaturePointDelegate, const FFeaturePoint&, NewFeaturePoint);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStrokeFinishDelegate);
 
 	USketchingComponent();
 
@@ -35,6 +36,10 @@ public:
 	// Fired when a waypoint is added to the current stroke
 	UPROPERTY(BlueprintAssignable, Category = "Drawing")
 	FVectorDelegate WaypointDelegate;
+
+	// Fired when a feature point is created
+	UPROPERTY()
+	FFeaturePointDelegate FeaturePointDelegate;
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

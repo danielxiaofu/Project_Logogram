@@ -92,7 +92,7 @@ void USketchingComponent::FinishSample(FVector WorldBrushPos)
 	// Generate turn point from the first point to the last point
 	GenerateTurningPoint(0, NewSymbol->GetLastStroke().WayPoints.Num() - 1, 1);
 
-	// Assign end point to the last feature point
+	// Assign the end point to the last feature point
 	NewSymbol->AddFeaturePoint(BrushPos, 0);
 	
 	CalculateFeaturePointDirection();

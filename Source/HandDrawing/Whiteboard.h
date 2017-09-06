@@ -8,6 +8,7 @@
 
 class USketchingComponent;
 class UBrushMovementComponent;
+class USymbolRecognizer;
 
 UCLASS()
 class HANDDRAWING_API AWhiteboard : public AActor
@@ -29,6 +30,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 	UBrushMovementComponent* BrushMovementComponent;
+
+	UPROPERTY(BlueprintReadOnly)
+	USymbolRecognizer* SymbolRecognizer;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

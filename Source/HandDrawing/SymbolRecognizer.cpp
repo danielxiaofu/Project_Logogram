@@ -2,7 +2,7 @@
 
 
 #include "SymbolRecognizer.h"
-
+#include "SketchingComponent.h"
 
 // Sets default values for this component's properties
 USymbolRecognizer::USymbolRecognizer()
@@ -19,9 +19,9 @@ USymbolRecognizer::USymbolRecognizer()
 void USymbolRecognizer::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// ...
 	
+	// ...
+
 }
 
 
@@ -33,8 +33,14 @@ void USymbolRecognizer::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	// ...
 }
 
-void USymbolRecognizer::ImportNewSymbol(USymbolCharacter * NewSymb)
+void USymbolRecognizer::OnSketchingComponentCreated(USketchingComponent * SketchingComponent)
 {
-	NewSymbol = NewSymb;
+	SketchingComponent->FeaturePointDelegate.AddDynamic(this, &USymbolRecognizer::OnFeaturePointCreated);
 }
+
+void USymbolRecognizer::OnFeaturePointCreated(const FFeaturePoint& FeaturePoint)
+{
+
+}
+
 
