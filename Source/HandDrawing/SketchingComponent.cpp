@@ -52,12 +52,17 @@ void USketchingComponent::StartSample(FVector WorldBrushPos)
 	FVector2D BrushPos;
 	ConvertWorldToLocalBoard(WorldBrushPos, BrushPos);
 
-	// Add waypoint
+	
+
+	// Add new stroke
 	NewSymbol->AddStroke();
+	NewStrokeDelegate.Broadcast();
+
+	// Add the first waypoint
 	NewSymbol->AddWaypoint(BrushPos);
 	LastSamplePoint = BrushPos;
 
-	// Add feature point
+	// Add the first feature point
 	NewSymbol->AddFeaturePoint(BrushPos, 0);
 
 	WaypointDelegate.Broadcast(ConvertLocalBoardToWorld(BrushPos));
@@ -92,11 +97,12 @@ void USketchingComponent::FinishSample(FVector WorldBrushPos)
 	// Generate turn point from the first point to the last point
 	GenerateTurningPoint(0, NewSymbol->GetLastStroke().WayPoints.Num() - 1, 1);
 
-	// Assign the end point to the last feature point
+	// Add the last feature point
 	NewSymbol->AddFeaturePoint(BrushPos, 0);
 	
 	CalculateFeaturePointDirection();
 
+	StrokeFinishDelegate.Broadcast();
 }
 
 void USketchingComponent::ReqestToAddSample(FVector WorldBrushPos)
@@ -235,7 +241,9 @@ void USketchingComponent::CalculateFeaturePointDirection()
 	else if (NewSymbol->NumOfStroke() == 1)
 	{
 		NewSymbol->SetFeaturePointDirection(0, 0);
-		UE_LOG(LogTemp, Warning, TEXT("Start point direction = %f"), 0)
+		PointDirectionDelegate.Broadcast(0);
+		if(bEnableDebugMessage)
+			UE_LOG(LogTemp, Warning, TEXT("Start point direction = %f"), 0)
 	}
 	// Else the direction of the start point will be relative to the end point of last stroke
 	else 
@@ -246,7 +254,10 @@ void USketchingComponent::CalculateFeaturePointDirection()
 		if (Angle < 0)
 			Angle = PI * 2 + Angle;
 		NewSymbol->SetFeaturePointDirection(0, Angle);
-		UE_LOG(LogTemp, Warning, TEXT("Start point direction = %f"), Angle)
+		PointDirectionDelegate.Broadcast(Angle);
+
+		if(bEnableDebugMessage)
+			UE_LOG(LogTemp, Warning, TEXT("Start point direction = %f"), Angle)
 	}
 
 	for (int32 i = 1; i < NewSymbol->GetLastStroke().FeaturePoints.Num(); i++)
@@ -256,8 +267,12 @@ void USketchingComponent::CalculateFeaturePointDirection()
 		if (Angle < 0)
 			Angle = PI * 2 + Angle;
 		NewSymbol->SetFeaturePointDirection(i, Angle);
+		PointDirectionDelegate.Broadcast(Angle);
+
 		int32 Pri = NewSymbol->GetLastStroke().FeaturePoints[i].Priority;
-		UE_LOG(LogTemp, Warning, TEXT("Point direction = %f, Priority = %d"), Angle, Pri)
+
+		if(bEnableDebugMessage)
+			UE_LOG(LogTemp, Warning, TEXT("Point direction = %f, Priority = %d"), Angle, Pri)
 	}
 
 }

@@ -29,5 +29,5 @@ public:
 	
 	bool HasInitialized();
 
-
+	TArray<FLibraryCharacter>& RetrieveAllCharacter();
 };

@@ -27,11 +27,11 @@ protected:
 public:	
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVectorDelegate, const FVector&, WorldPosition);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFeaturePointDelegate, const FFeaturePoint&, NewFeaturePoint);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPointDirectionDelegate, float, NewFeaturePoint);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNewStrokeDelegate);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStrokeFinishDelegate);
 
 	USketchingComponent();
-
 
 	// Fired when a waypoint is added to the current stroke
 	UPROPERTY(BlueprintAssignable, Category = "Drawing")
@@ -39,7 +39,18 @@ public:
 
 	// Fired when a feature point is created
 	UPROPERTY()
-	FFeaturePointDelegate FeaturePointDelegate;
+	FPointDirectionDelegate PointDirectionDelegate;
+
+	// Fired when a new stroke is created
+	UPROPERTY()
+	FNewStrokeDelegate NewStrokeDelegate;
+
+	// Fired when current stroke is finished
+	UPROPERTY()
+	FStrokeFinishDelegate StrokeFinishDelegate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	bool bEnableDebugMessage = false;
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

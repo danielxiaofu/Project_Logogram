@@ -4,6 +4,9 @@
 
 void UCharacterLibrary::ReadCharacter()
 {
+	if (bHasInitialized)
+		return;
+
 	// Read the json file that contains all symbol characters
 	FString ReadDirectory = FPaths::GameContentDir();
 	FString FileName = FString("Symbols.txt");
@@ -80,4 +83,11 @@ FLibraryCharacter& UCharacterLibrary::AddNewCharacter(FString CharName, int32 Ty
 bool UCharacterLibrary::HasInitialized()
 {
 	return bHasInitialized;
+}
+
+TArray<FLibraryCharacter>& UCharacterLibrary::RetrieveAllCharacter()
+{
+	TArray<FLibraryCharacter>& Characters = LibraryCharacters;
+
+	return Characters;
 }

@@ -25,13 +25,13 @@ protected:
 
 public:	
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USketchingComponent* SketchingComponent;
 
 	UPROPERTY(BlueprintReadOnly)
 	UBrushMovementComponent* BrushMovementComponent;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USymbolRecognizer* SymbolRecognizer;
 
 	// Called every frame

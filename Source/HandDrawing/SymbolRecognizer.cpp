@@ -3,6 +3,7 @@
 
 #include "SymbolRecognizer.h"
 #include "SketchingComponent.h"
+#include "DataSingletonFunctionLibrary.h"
 
 // Sets default values for this component's properties
 USymbolRecognizer::USymbolRecognizer()
@@ -21,7 +22,8 @@ void USymbolRecognizer::BeginPlay()
 	Super::BeginPlay();
 	
 	// ...
-
+	CharacterLibrary = UDataSingletonFunctionLibrary::GetCharacterLibrary();
+	
 }
 
 
@@ -35,11 +37,40 @@ void USymbolRecognizer::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 
 void USymbolRecognizer::OnSketchingComponentCreated(USketchingComponent * SketchingComponent)
 {
-	SketchingComponent->FeaturePointDelegate.AddDynamic(this, &USymbolRecognizer::OnFeaturePointCreated);
+	SketchingComponent->PointDirectionDelegate.AddDynamic(this, &USymbolRecognizer::OnPointDirectionComputed);
+	SketchingComponent->NewStrokeDelegate.AddDynamic(this, &USymbolRecognizer::OnStrokeCreated);
+	SketchingComponent->StrokeFinishDelegate.AddDynamic(this, &USymbolRecognizer::OnStrokeFinished);
 }
 
-void USymbolRecognizer::OnFeaturePointCreated(const FFeaturePoint& FeaturePoint)
+void USymbolRecognizer::OnPointDirectionComputed(float Dir)
 {
+	if (PendingSymbol.Num() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No feature stroke found in PendingSymbol, make sure it has at least one feature stroke before adding direction"))
+		return;
+	}
+	
+	// Add the direction to the newest feature stroke
+	PendingSymbol.Last().AddFeatureDirection(Dir);
+}
+
+void USymbolRecognizer::OnStrokeCreated()
+{
+	// Add a new feature stroke
+	PendingSymbol.Add(FFeaturedStroke());
+}
+
+void USymbolRecognizer::OnStrokeFinished()
+{
+	if (bEnableDebugMessage)
+	{
+		for (int32 i = 0; i < PendingSymbol.Num(); i++)
+		{
+			FString String = "Stroke " + FString::FromInt(i) + ": " + PendingSymbol[i].ToString();
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *String)
+		}
+	}
+
 
 }
 

@@ -9,6 +9,7 @@
 #include "SymbolRecognizer.generated.h"
 
 class USketchingComponent;
+class UCharacterLibrary;
 
 /** Stroke that contains only direction of feature points
 */
@@ -19,7 +20,7 @@ struct FFeaturedStroke {
 	UPROPERTY()
 	TArray<float> FeatureDirections;
 
-	void AddFeatureDirections(float Fd)
+	void AddFeatureDirection(float Fd)
 	{
 		FeatureDirections.Add(Fd);
 	}
@@ -33,10 +34,37 @@ struct FFeaturedStroke {
 	{
 		return FeatureDirections;
 	}
+
+	FString ToString()
+	{
+		FString String;
+		for (float F : FeatureDirections)
+		{
+			String += FString::SanitizeFloat(F) + ", ";
+		}
+		return String;
+	}
 };
 
-/** This class takes SymbolCharacter created in SketchingComponent and compare it with
-* every Character in CharacterLibrary
+USTRUCT(BlueprintType)
+struct FCompareResult {
+	GENERATED_BODY()
+
+	UPROPERTY()
+	ECharacterType CharacterType;
+
+	UPROPERTY()
+	float DirectionDiff;
+
+	FCompareResult() {
+		CharacterType = ECharacterType::VE_NotDefined;
+		DirectionDiff = 0;
+	}
+};
+
+/** This class takes stroke data that are created in SketchingComponent and convert them into
+* type FeatureStroke, a struct that contains only the direction of feature points. Then the FeatureStroke
+* will be compared with each character in the library and a CompareResult type will be generated 
 */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class HANDDRAWING_API USymbolRecognizer : public UActorComponent
@@ -59,12 +87,34 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	/** Called when a SketchingComponent is created, the pointer is passed in 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	bool bEnableDebugMessage = false;
+
+	/** Called when a SketchingComponent is created, the pointer is passed 
 	* in order to bind delegates
 	* @param SketchingComponent pointer of the USketchingComponent
 	*/
 	void OnSketchingComponentCreated(USketchingComponent* SketchingComponent);
 
+	/** Called when a feature point has calculated its direction
+	* @param Dir diraction of the feature point
+	*/
 	UFUNCTION()
-	void OnFeaturePointCreated(const FFeaturePoint& FeaturePoint);
+	void OnPointDirectionComputed(float Dir);
+
+	/** Called when a stroke is created
+	*/
+	UFUNCTION()
+	void OnStrokeCreated();
+
+	/** Called when current stroke is finished
+	*/
+	UFUNCTION()
+	void OnStrokeFinished();
+
+private:
+	UPROPERTY()
+	UCharacterLibrary* CharacterLibrary;
+
+	
 };
