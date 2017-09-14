@@ -23,6 +23,8 @@ void AWhiteboard::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	ChangeDrawMode(DrawMode);
+
 	/* Construct world on-board coordinate system
 	*/
 	BoardMesh = FindComponentByClass<UStaticMeshComponent>();
@@ -33,7 +35,7 @@ void AWhiteboard::BeginPlay()
 	BoardAxisX = (BottomRight - BottomLeft).GetSafeNormal();
 	// Pass board axises to child components
 	SketchingComponent->SetBoardRawAxis(BottomRight - BottomLeft, TopLeft - BottomLeft);
-	BrushMovementComponent->SetBoardAxis(BoardAxisX, BoardAxisY, BottomLeft, BoardMesh->GetSocketLocation(FName("TopRight")));
+	BrushMovementComponent->SetBoardAxis(BoardAxisX, BoardAxisY, BottomLeft, BoardMesh->GetSocketLocation(FName("TopRight")), TopLeft);
 }
 
 // Called every frame
@@ -55,6 +57,43 @@ void AWhiteboard::EndDraw()
 	SketchingComponent->FinishSample(BrushMovementComponent->BrushPosition);
 	bIsDrawing = false;
 
+}
+
+void AWhiteboard::ResetWhiteBoard()
+{
+	if (bIsDrawing)
+		return;
+
+	SketchingComponent->ClearPendingSymbol();
+	SymbolRecognizer->ClearPendingSymbol();
+}
+
+void AWhiteboard::ChangeDrawMode(EDrawMode DrawM)
+{
+	if (!BrushMovementComponent)
+		return;
+
+	DrawMode = DrawM;
+
+	switch (DrawMode)
+	{
+	case EDrawMode::VE_Mouse:
+		BrushMovementComponent->SetDirectMouseControl(true);
+		break;
+	case EDrawMode::VE_Keyboard:
+		BrushMovementComponent->SetDirectMouseControl(false);
+		break;
+	case EDrawMode::VE_Gamepad:
+		BrushMovementComponent->SetDirectMouseControl(false);
+		BrushMovementComponent->SetEightDirectionMode(false);
+		break;
+	case EDrawMode::VE_GamepadConstrained:
+		BrushMovementComponent->SetDirectMouseControl(false);
+		BrushMovementComponent->SetEightDirectionMode(true);
+		break;
+	default:
+		break;
+	}
 }
 
 

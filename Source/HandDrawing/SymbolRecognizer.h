@@ -112,9 +112,26 @@ public:
 	UFUNCTION()
 	void OnStrokeFinished();
 
+	void ClearPendingSymbol();
+
 private:
+
+	/** This variable determines how much does stroke number difference contribute to overall difference of a symbol
+	*/
+	const float PenaltyPerStrokeNum = 4 / PI;
+
 	UPROPERTY()
 	UCharacterLibrary* CharacterLibrary;
 
-	
+	/** Compare the pending symbol with all characters in the library
+	* @return FCompareResult the result of comparision
+	*/
+	UFUNCTION()
+	FCompareResult CompareAll();
+
+	float CompareSymbolDifference(const TArray<FFeaturedStroke>& TargetSymbol, const FLibraryCharacter& LibrarySymbol);
+
+	float CompareStrokeDifference(const FFeaturedStroke& TargetStroke, const FLibraryStroke& LibraryStroke);
+
+	float ComparePointDifference(float TargetDirection, float LibraryDirection);
 };

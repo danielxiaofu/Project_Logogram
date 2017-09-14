@@ -97,4 +97,9 @@ bool USymbolCharacter::SetFeaturePointDirection(int32 Index, float Direction)
 	return true;
 }
 
+void USymbolCharacter::ClearStrokeArray()
+{
+	Strokes.Empty();
+}
+
 

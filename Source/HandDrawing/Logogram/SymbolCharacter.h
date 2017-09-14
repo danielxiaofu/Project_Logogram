@@ -52,7 +52,7 @@ struct FStroke
 	TArray<FVector2D> WayPoints;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stroke")
-		TArray<FFeaturePoint> FeaturePoints;
+	TArray<FFeaturePoint> FeaturePoints;
 
 	FVector2D& GetWaypoint(int32 Index) {
 		if (Index >= WayPoints.Num())
@@ -114,5 +114,5 @@ public:
 	*/
 	bool SetFeaturePointDirection(int32 Index, float Direction);
 	
-	
+	void ClearStrokeArray();
 };

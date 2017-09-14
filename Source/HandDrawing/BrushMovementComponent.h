@@ -6,7 +6,6 @@
 #include "Components/ActorComponent.h"
 #include "BrushMovementComponent.generated.h"
 
-
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class HANDDRAWING_API UBrushMovementComponent : public UActorComponent
 {
@@ -44,17 +43,35 @@ public:
 	* @param AxisY Y axis of the board
 	* @param BottomLeft bottomleft corner of the board
 	* @param TopRight topright corner of the board
+	* @param TopLeft topleft corner of the board
 	*/
-	void SetBoardAxis(FVector AxisX, FVector AxisY, FVector BottomLeft, FVector TopRight);
+	void SetBoardAxis(FVector AxisX, FVector AxisY, FVector BottomLeft, FVector TopRight, FVector TopLeft);
+
+	/** Whether to constrain brush movement to eight directions when using gamepad
+	* @param bEightDirection constrain direction if true, free draw if false
+	*/
+	void SetEightDirectionMode(bool bEightDirection);
+
+	/** Whether to use mouse to control the brush directly
+	* @param bMouseControl enable mouse control if true, disable mouse control if false
+	*/
+	void SetDirectMouseControl(bool bMouseControl);
 
 private:
 
 	FVector BoardAxisX = FVector(0);
 	FVector BoardAxisY = FVector(0);
 	FVector Origin = FVector(0);
-	FVector TopRightOrigin = FVector(0);
+	FVector TopRightCorner = FVector(0);
+	FVector TopLeftCorner = FVector(0);
 
 	FVector2D North, South, East, West, NorthEast, NorthWest, SouthEast, SouthWest;
+
+	UPROPERTY()
+	APlayerController* PlayerController;
+
+	bool bEightDirectionMode = false;
+	bool bDirectMouseControl = false;
 
 	void UpdateBrushPosition(float DeltaTime);
 

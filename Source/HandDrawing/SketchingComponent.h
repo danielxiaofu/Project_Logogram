@@ -86,7 +86,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Debug")
 	TArray<FVector> GetLastFeaturePoints();
 
-
+	/** Clear symbol data, calls clean method in USymbolCharacter
+	*/
+	void ClearPendingSymbol();
 
 private:
 

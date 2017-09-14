@@ -306,5 +306,10 @@ FVector USketchingComponent::ConvertLocalBoardToWorld(const FVector2D & LocalPos
 	return WorldOnBoard + Board->GetSocketLocation(FName("BottomLeft"));
 }
 
+void USketchingComponent::ClearPendingSymbol()
+{
+	NewSymbol->ClearStrokeArray();
+}
+
 
 
