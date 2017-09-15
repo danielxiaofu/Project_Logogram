@@ -23,10 +23,6 @@ void USketchingComponent::BeginPlay()
 	
 	PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
-	Board = GetOwner()->FindComponentByClass<UStaticMeshComponent>();
-	check(Board && "Could not find board mesh");
-	InitializeSampleDistance();
-
 }
 
 // Called every frame
@@ -144,10 +140,14 @@ void USketchingComponent::ReqestToAddSample(FVector WorldBrushPos)
 
 }
 
-void USketchingComponent::SetBoardRawAxis(FVector AxisX, FVector AxisY)
+void USketchingComponent::SetBoardRawAxis(FVector AxisX, FVector AxisY, FVector BottomLeftCorner, FVector TopRightCorner)
 {
 	BoardRawAxisX = AxisX;
 	BoardRawAxisY = AxisY;
+	BottomLeft = BottomLeftCorner;
+	TopRight = TopRightCorner;
+
+	InitializeSampleDistance();
 }
 
 TArray<FVector> USketchingComponent::GetLastWaypoints()
@@ -182,8 +182,8 @@ void USketchingComponent::InitializeSampleDistance()
 	/* Calculate on-screen size of the board
 	*/
 	FVector2D ScreenBottomLeft, ScreenTopRight;
-	PlayerController->ProjectWorldLocationToScreen(Board->GetSocketLocation(FName("BottomLeft")), ScreenBottomLeft);
-	PlayerController->ProjectWorldLocationToScreen(Board->GetSocketLocation(FName("TopRight")), ScreenTopRight);
+	PlayerController->ProjectWorldLocationToScreen(BottomLeft, ScreenBottomLeft);
+	PlayerController->ProjectWorldLocationToScreen(TopRight, ScreenTopRight);
 	FVector2D Diagonal = ScreenTopRight - ScreenBottomLeft;
 	float Size = FMath::Abs(Diagonal.X);
 	CanvasSize = Size;
@@ -280,7 +280,7 @@ void USketchingComponent::CalculateFeaturePointDirection()
 void USketchingComponent::ConvertWorldToLocalBoard(FVector WorldPos, FVector2D& LocalPos)
 {
 	FVector2D ScreenBottomLeft;
-	PlayerController->ProjectWorldLocationToScreen(Board->GetSocketLocation(FName("BottomLeft")), ScreenBottomLeft);
+	PlayerController->ProjectWorldLocationToScreen(BottomLeft, ScreenBottomLeft);
 	FVector2D ScreenPosition;
 	PlayerController->ProjectWorldLocationToScreen(WorldPos, ScreenPosition);
 	FVector2D LocalPosition = ScreenPosition - ScreenBottomLeft;
@@ -303,7 +303,7 @@ FVector USketchingComponent::ConvertLocalBoardToWorld(const FVector2D & LocalPos
 
 	//UE_LOG(LogTemp, Warning, TEXT("WorldOnBoard = %s"), *(WorldOnBoard.ToString()))
 
-	return WorldOnBoard + Board->GetSocketLocation(FName("BottomLeft"));
+	return WorldOnBoard + BottomLeft;
 }
 
 void USketchingComponent::ClearPendingSymbol()

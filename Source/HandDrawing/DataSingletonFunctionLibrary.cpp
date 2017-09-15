@@ -9,15 +9,20 @@ UCharacterLibrary * UDataSingletonFunctionLibrary::GetCharacterLibrary()
 {
 	if (!CharacterLibrary)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Character created"))
+		UE_LOG(LogTemp, Warning, TEXT("Character library created"))
 		CharacterLibrary = NewObject<UCharacterLibrary>();
 		CharacterLibrary->ReadCharacter();
 		
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Character exists"))
+		UE_LOG(LogTemp, Warning, TEXT("Character library exists"))
 	}
 
 	return CharacterLibrary;
+}
+
+void UDataSingletonFunctionLibrary::DestroyCharacterLibrary()
+{
+	CharacterLibrary = nullptr;
 }

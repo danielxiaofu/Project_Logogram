@@ -23,5 +23,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "CharacterLibrary")
 	static UCharacterLibrary* GetCharacterLibrary();
 	
-	
+	UFUNCTION(BlueprintCallable, Category = "CharacterLibrary")
+	static void DestroyCharacterLibrary();
 };

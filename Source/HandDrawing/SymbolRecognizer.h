@@ -56,9 +56,19 @@ struct FCompareResult {
 	UPROPERTY()
 	float DirectionDiff;
 
+	UPROPERTY()
+	FString Name;
+
 	FCompareResult() {
 		CharacterType = ECharacterType::VE_NotDefined;
 		DirectionDiff = 0;
+		Name = FString("Unknown");
+	}
+
+	FString ToString() {
+		FString String ="Compare result: Name: " + Name;
+		String += " Difference: " + FString::SanitizeFloat(DirectionDiff);
+		return String;
 	}
 };
 
@@ -118,7 +128,7 @@ private:
 
 	/** This variable determines how much does stroke number difference contribute to overall difference of a symbol
 	*/
-	const float PenaltyPerStrokeNum = 4 / PI;
+	const float PenaltyPerStrokeNum = PI;
 
 	UPROPERTY()
 	UCharacterLibrary* CharacterLibrary;

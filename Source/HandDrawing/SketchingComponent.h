@@ -76,7 +76,7 @@ public:
 	* @param AxisX non-normalized X axis of the board 
 	* @param AxisY non-normalized Y axis of the board
 	*/
-	void SetBoardRawAxis(FVector AxisX, FVector AxisY);
+	void SetBoardRawAxis(FVector AxisX, FVector AxisY, FVector BottomLeftCorner, FVector TopRightCorner);
 
 	// Debug only, get waypoints in the last stroke
 	UFUNCTION(BlueprintCallable, Category = "Debug")
@@ -102,15 +102,14 @@ private:
 	USymbolCharacter* NewSymbol;
 
 	UPROPERTY()
-	UStaticMeshComponent* Board;
-
-	UPROPERTY()
 	APlayerController* PlayerController;
 
 	FVector2D LastSamplePoint;
 
 	FVector BoardRawAxisX = FVector(0);
 	FVector BoardRawAxisY = FVector(0);
+	FVector BottomLeft = FVector(0);
+	FVector TopRight = FVector(0);
 
 	float CanvasSize = -1;
 	float WayPointSampleDistance = -1; // Distance between way points

@@ -72,6 +72,10 @@ void USymbolRecognizer::OnStrokeFinished()
 		}
 	}
 
+	// Compare current symbol with library characters
+	FCompareResult CompareResult = CompareAll();
+
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *(CompareResult.ToString()))
 
 }
 
@@ -82,18 +86,31 @@ void USymbolRecognizer::ClearPendingSymbol()
 
 FCompareResult USymbolRecognizer::CompareAll()
 {
+	float MinDifference = MAX_FLT;
+	FCompareResult CompareResult;
+
 	TArray<FLibraryCharacter>& AllChars = CharacterLibrary->RetrieveAllCharacter();
 	for (int32 i = 0; i < AllChars.Num(); i++)
 	{
 		FLibraryCharacter& Char = AllChars[i];
+		float SymbolDifference = CompareSymbolDifference(PendingSymbol, Char);
+		if (SymbolDifference < MinDifference) {
+			MinDifference = SymbolDifference;
+			CompareResult.Name = Char.Name;
+			CompareResult.DirectionDiff = MinDifference;
+			CompareResult.CharacterType = Char.Type;
+		}
+
 	}
 
-	return FCompareResult();
+
+
+	return CompareResult;
 }
 
 float USymbolRecognizer::CompareSymbolDifference(const TArray<FFeaturedStroke>& InputSymbol, const FLibraryCharacter& LibrarySymbol)
 {
-	//float Result;
+	float Result = 0;
 
 	// Compute the difference of number of strokes
 	float StrokeNumDiff = FMath::Abs(InputSymbol.Num() - LibrarySymbol.Strokes.Num());
@@ -106,10 +123,12 @@ float USymbolRecognizer::CompareSymbolDifference(const TArray<FFeaturedStroke>& 
 	{
 		const FFeaturedStroke& InputStroke = InputSymbol[i];
 		const FLibraryStroke& LibraryStroke = LibrarySymbol.Strokes[i];
-
+		Result += CompareStrokeDifference(InputStroke, LibraryStroke);
 	}
 
-	return 0.0f;
+	Result += StrokeNumDiff * PenaltyPerStrokeNum;
+
+	return Result;
 }
 
 float USymbolRecognizer::CompareStrokeDifference(const FFeaturedStroke & TargetStroke, const FLibraryStroke & LibraryStroke)

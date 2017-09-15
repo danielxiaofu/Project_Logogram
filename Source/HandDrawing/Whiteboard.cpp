@@ -31,11 +31,12 @@ void AWhiteboard::BeginPlay()
 	FVector BottomLeft = BoardMesh->GetSocketLocation(FName("BottomLeft"));
 	FVector TopLeft = BoardMesh->GetSocketLocation(FName("TopLeft"));
 	FVector BottomRight = BoardMesh->GetSocketLocation(FName("BottomRight"));
+	FVector TopRight = BoardMesh->GetSocketLocation(FName("TopRight"));
 	BoardAxisY = (TopLeft - BottomLeft).GetSafeNormal();
 	BoardAxisX = (BottomRight - BottomLeft).GetSafeNormal();
 	// Pass board axises to child components
-	SketchingComponent->SetBoardRawAxis(BottomRight - BottomLeft, TopLeft - BottomLeft);
-	BrushMovementComponent->SetBoardAxis(BoardAxisX, BoardAxisY, BottomLeft, BoardMesh->GetSocketLocation(FName("TopRight")), TopLeft);
+	SketchingComponent->SetBoardRawAxis(BottomRight - BottomLeft, TopLeft - BottomLeft, BottomLeft, TopRight);
+	BrushMovementComponent->SetBoardAxis(BoardAxisX, BoardAxisY, BottomLeft, TopRight, TopLeft);
 }
 
 // Called every frame
